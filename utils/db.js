@@ -19,18 +19,10 @@ class DBClient {
       console.log(`Successfully connected to database: ${this.db.databaseName}`);
       return true;
     } catch (err) {
-    //   console.error('Failed to connect to MongoDB', err);
-    //   throw err;
       return false;
     }
   }
-
-//   async init() {
-//     console.log(mongoClient.isConnected());
-//     await mongoClient.connect();
-//     console.log(mongoClient.isConnected());
-//   }
 }
 
-const newdb = new DBClient();
-newdb.connect();
+const dbClient = new DBClient();
+export default dbClient;
