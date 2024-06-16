@@ -1,17 +1,18 @@
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
-// const express = require('express');
-// const app = express();
-
-// app.get('/status')
-if (redisClient.isAlive && dbClient.isAlive) {
-  app.get('/status', (req, res) => {
-    res.status(200).send({ redis: true, db: true });
-  });
-
-  app.get('/stats', (req, res) => {
-    res.status(200).send({ users: 12, files: 1231 });
-  });
-  app.get;
-}
+class AppController {
+    static getStatus(req, res) {
+      const redisAlive = redisClient.isAlive();
+      const dbAlive = dbClient.isAlive();
+      return res.status(200).send({ redis: redisAlive, db: dbAlive });
+    }
+  
+    static async getStats(req, res) {
+      const users = await dbClient.nbUsers();
+      const files = await dbClient.nbFiles();
+      return res.status(200).send({ users, files });
+    }
+  }
+  
+export default AppController;
