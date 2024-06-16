@@ -1,24 +1,61 @@
-import redisClient from '../utils/redis';
+import crypto from 'crypto';
 import dbClient from '../utils/db';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+import redisClient from '../utils/redis';
 
 class AuthController {
-  static getConnect(req, res) {
-    const redisAlive = redisClient.isAlive();
-    const dbAlive = dbClient.isAlive();
-    return res.status(200).send({ redis: redisAlive, db: dbAlive });
+    static async connect(req, res) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+  
+      const base64Credentials = authHeader.split(' ')[1];
+      const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+      const [email, password] = credentials.split(':');
+      const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
+  
+      const user = await dbClient.db.collection('users').findOne({ email, password: hashedPassword });
+      if (!user) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+  
+      const token = uuidv4();
+      await redisClient.set(`auth_${token}`, user._id.toString(), 24 * 60 * 60);
+  
+      return res.status(200).send({ token });
+    }
+  
+    static async disconnect(req, res) {
+      const token = req.headers['x-token'];
+      if (!token || !await redisClient.get(`auth_${token}`)) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+  
+      await redisClient.del(`auth_${token}`);
+      return res.sendStatus(204);
+    }
+  
+    static async getMe(req, res) {
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+      
+      if (!userId) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+  
+      const user = await dbClient.db.collection('users').findOne({ _id: new ObjectId(userId) });
+      
+      if (!user) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+  
+      return res.status(200).send({
+        id: user._id,
+        email: user.email,
+      });
+    }
   }
 
-  static async getDisconnect(req, res) {
-    const users = await dbClient.nbUsers();
-    const files = await dbClient.nbFiles();
-    return res.status(200).send({ users, files });
-  }
-
-  static async getMe(req, res) {
-    const users = await dbClient.nbUsers();
-    const files = await dbClient.nbFiles();
-    return res.status(200).send({ users, files });
-  }
-}
-
-export default AuthController;
+export default UsersController;
