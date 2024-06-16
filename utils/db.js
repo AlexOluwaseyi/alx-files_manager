@@ -8,19 +8,26 @@ class DBClient {
     const database = process.env.DB_DATABASE || 'files_manager';
     const uri = `mongodb://${host}:${port}/${database}`;
 
-    this.client = new MongoClient(uri);
-    // console.log(client);
+    this.client = new MongoClient(`mongodb://${host}:${port}/${database}`);
+    this.client.connect()
+      .then(() => {
+        this.db = this.client.db(database);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }
 
   async isAlive() {
-    try {
-      await this.client.connect();
-      this.db = this.client.db();
-      console.log(`Successfully connected to database: ${this.db.databaseName}`);
-      return true;
-    } catch (err) {
-      return false;
-    }
+    return !!this.db;
+  }
+
+  async nbUsers() {
+    return this.db.collection('users').countDocuments();
+  }
+
+  async nbFiles() {
+    return this.db.collection('files').countDocuments();
   }
 }
 
