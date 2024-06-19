@@ -4,6 +4,7 @@ import imageThumbnail from 'image-thumbnail';
 import fs from 'fs';
 import dbClient from './utils/db';
 
+// Queue for processing image files
 const fileQueue = new Queue('fileQueue');
 
 fileQueue.process(async (job) => {
@@ -18,9 +19,28 @@ fileQueue.process(async (job) => {
 
   const sizes = [500, 250, 100];
 
-  sizes.forEach(async (size) => {
+  for (const size of sizes) {
     const thumbnail = await imageThumbnail(file.localPath, { width: size });
     const thumbnailPath = `${file.localPath}_${size}`;
     fs.writeFileSync(thumbnailPath, thumbnail);
-  });
+  }
 });
+
+// Queue for sending welcome emails
+const userQueue = new Queue('userQueue');
+
+userQueue.process(async (job) => {
+  const { userId } = job.data;
+
+  if (!userId) throw new Error('Missing userId');
+
+  const user = await dbClient.db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+  if (!user) throw new Error('User not found');
+
+  console.log(`Welcome ${user.email}!`);
+});
+
+// Start processing queues
+fileQueue.process();
+userQueue.process();

@@ -1,5 +1,8 @@
 import crypto from 'crypto';
 import dbClient from '../utils/db';
+import Queue from 'bull';
+
+const userQueue = new Queue('userQueue');
 
 class UsersController {
   static async postNew(req, res) {
@@ -25,6 +28,9 @@ class UsersController {
       password: hashedPassword,
     });
 
+    await userQueue.add({ userId: newUser.insertedId });
+
+    // Respond with new user details
     return res.status(201).send({
       id: newUser.insertedId,
       email,
