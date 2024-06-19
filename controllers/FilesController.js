@@ -93,14 +93,14 @@ class FilesController {
   static async getShow(req, res) {
     const token = req.headers['x-token'];
     const userId = await redisClient.get(`auth_${token}`);
-    
+
     if (!userId) {
       return res.status(401).send({ error: 'Unauthorized' });
     }
 
     const fileId = req.params.id;
     const file = await dbClient.db.collection('files').findOne({ _id: fileId, userId });
-    
+
     if (!file) {
       return res.status(404).send({ error: 'Not found' });
     }
@@ -111,20 +111,20 @@ class FilesController {
   static async getIndex(req, res) {
     const token = req.headers['x-token'];
     const userId = await redisClient.get(`auth_${token}`);
-    
+
     if (!userId) {
       return res.status(401).send({ error: 'Unauthorized' });
     }
 
     const parentId = req.query.parentId || '0';
     const page = parseInt(req.query.page, 10) || 0;
-    
+
     const files = await dbClient.db.collection('files')
       .find({ userId, parentId })
       .skip(page * 20)
       .limit(20)
       .toArray();
-    
+
     return res.status(200).send(files);
   }
 }
