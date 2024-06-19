@@ -5,9 +5,8 @@ import { ObjectId } from 'mongodb';
 import mime from 'mime-types';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
-import Queue from 'bull';
 
-const fileQueue = new Queue('fileQueue');
+// const fileQueue = new Queue('fileQueue');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -197,6 +196,7 @@ class FilesController {
       return res.status(400).send({ error: "A folder doesn't have content" });
     }
 
+    let size;
     // Check if size parameter is valid and modify the localPath accordingly
     if (size && ['500', '250', '100'].includes(size)) {
       const sizePath = `${file.localPath}_${size}`;
