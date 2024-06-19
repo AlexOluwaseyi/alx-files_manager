@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+import { ObjectId } from 'mongodb';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
-import { ObjectId } from 'mongodb';
 
 class FilesController {
   static async postUpload(req, res) {
@@ -133,7 +133,7 @@ class FilesController {
   static async putPublish(req, res) {
     const token = req.headers['x-token'];
     const userId = await redisClient.get(`auth_${token}`);
-    
+
     if (!userId) {
       return res.status(401).send({ error: 'Unauthorized' });
     }
@@ -142,9 +142,9 @@ class FilesController {
     const result = await dbClient.db.collection('files').findOneAndUpdate(
       { _id: fileId, userId },
       { $set: { isPublic: true } },
-      { returnOriginal: false }
+      { returnOriginal: false },
     );
-    
+
     if (!result.value) {
       return res.status(404).send({ error: 'Not found' });
     }
@@ -155,7 +155,7 @@ class FilesController {
   static async putUnpublish(req, res) {
     const token = req.headers['x-token'];
     const userId = await redisClient.get(`auth_${token}`);
-    
+
     if (!userId) {
       return res.status(401).send({ error: 'Unauthorized' });
     }
@@ -164,9 +164,9 @@ class FilesController {
     const result = await dbClient.db.collection('files').findOneAndUpdate(
       { _id: fileId, userId },
       { $set: { isPublic: false } },
-      { returnOriginal: false }
+      { returnOriginal: false },
     );
-    
+
     if (!result.value) {
       return res.status(404).send({ error: 'Not found' });
     }
