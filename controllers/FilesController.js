@@ -2,9 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
 import { ObjectId } from 'mongodb';
+import mime from 'mime-types';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
-import mime from 'mime-types';
 
 class FilesController {
   static async postUpload(req, res) {
@@ -200,7 +200,7 @@ class FilesController {
 
     const mimeType = mime.lookup(file.name) || 'application/octet-stream';
     res.setHeader('Content-Type', mimeType);
-    
+
     return fs.createReadStream(file.localPath).pipe(res);
   }
 }
