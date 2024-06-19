@@ -31,7 +31,7 @@ class FilesController {
 
     // ... handle parentId checks ...
 
-    const localPath;
+    // const localPath;
 
     if (type === 'folder') {
       // ... add folder document to DB ...
@@ -61,7 +61,7 @@ class FilesController {
     }
 
     const filename = uuidv4();
-    localPath = path.join(folderPath, filename);
+    const localPath = path.join(folderPath, filename);
 
     // Decode Base64 data and write file to disk
     const buffer = Buffer.from(data, 'base64');
