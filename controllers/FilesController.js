@@ -4,6 +4,7 @@ import path from 'path';
 import { ObjectId } from 'mongodb';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
+import mime from 'mime-types';
 
 class FilesController {
   static async postUpload(req, res) {
@@ -172,6 +173,35 @@ class FilesController {
     }
 
     return res.status(200).send(result.value);
+  }
+
+  static async getFile(req, res) {
+    const fileId = req.params.id;
+    const file = await dbClient.db.collection('files').findOne({ _id: new ObjectId(fileId) });
+
+    if (!file) {
+      return res.status(404).send({ error: 'Not found' });
+    }
+
+    const token = req.headers['x-token'];
+    const userId = token ? await redisClient.get(`auth_${token}`) : null;
+
+    if (file.isPublic === false && (!userId || userId !== file.userId.toString())) {
+      return res.status(404).send({ error: 'Not found' });
+    }
+
+    if (file.type === 'folder') {
+      return res.status(400).send({ error: "A folder doesn't have content" });
+    }
+
+    if (!fs.existsSync(file.localPath)) {
+      return res.status(404).send({ error: 'Not found' });
+    }
+
+    const mimeType = mime.lookup(file.name) || 'application/octet-stream';
+    res.setHeader('Content-Type', mimeType);
+    
+    return fs.createReadStream(file.localPath).pipe(res);
   }
 }
 
