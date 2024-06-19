@@ -128,6 +128,50 @@ class FilesController {
 
     return res.status(200).send(files);
   }
+
+  static async putPublish(req, res) {
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    
+    if (!userId) {
+      return res.status(401).send({ error: 'Unauthorized' });
+    }
+
+    const fileId = req.params.id;
+    const result = await dbClient.db.collection('files').findOneAndUpdate(
+      { _id: fileId, userId },
+      { $set: { isPublic: true } },
+      { returnOriginal: false }
+    );
+    
+    if (!result.value) {
+      return res.status(404).send({ error: 'Not found' });
+    }
+
+    return res.status(200).send(result.value);
+  }
+
+  static async putUnpublish(req, res) {
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    
+    if (!userId) {
+      return res.status(401).send({ error: 'Unauthorized' });
+    }
+
+    const fileId = req.params.id;
+    const result = await dbClient.db.collection('files').findOneAndUpdate(
+      { _id: fileId, userId },
+      { $set: { isPublic: false } },
+      { returnOriginal: false }
+    );
+    
+    if (!result.value) {
+      return res.status(404).send({ error: 'Not found' });
+    }
+
+    return res.status(200).send(result.value);
+  }
 }
 
 export default FilesController;
